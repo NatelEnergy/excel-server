@@ -114,7 +114,18 @@ public class WorkbookEvaluator {
     }
     
     switch(cell.getCellTypeEnum()) {
-    case NUMERIC: cell.setCellValue((double)v); break;
+    case NUMERIC: {
+      if(v instanceof Number) {
+        cell.setCellValue(((Number)v).doubleValue()); 
+      }
+      else if(v instanceof String) {
+        cell.setCellValue(Double.parseDouble(v.toString()));
+      }
+      else {
+        throw new IllegalArgumentException("Can not convert: "+v +" to double cell // " + cell );        
+      }
+      break;
+    }
     case BLANK:
     case STRING: cell.setCellValue(v.toString()); break;
     default:

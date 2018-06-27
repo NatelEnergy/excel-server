@@ -115,7 +115,6 @@ public class ExampleResource {
     return eval.surfaceAndGetWorkbook(getSurfaceRequest());
   }
   
-  
   @GET
   @Path("/dump")
   @ApiOperation( value="dump", hidden=true )
