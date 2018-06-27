@@ -38,6 +38,8 @@ jobs:
             mvn clean install
             mkdir dist
             mv target/*.jar dist
+            rm dist/*-sources.jar
+            rm dist/original*
 
       - store_artifacts:
           path: dist
