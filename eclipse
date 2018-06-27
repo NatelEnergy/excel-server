@@ -1,0 +1,16 @@
+rm         .classpath
+rm         .project
+rm       */.classpath
+rm       */.project
+rm     */*/.classpath
+rm     */*/.project
+rm   */*/*/.classpath
+rm   */*/*/.project
+rm */*/*/*/.classpath
+rm */*/*/*/.project
+mvn eclipse:eclipse  -DdownloadSources=true
+
+echo done
+
+
+

@@ -1,0 +1,8 @@
+{
+   "sheet":{
+      "source": "assets",
+      "path":"simple.xlsx",
+      "defaultSheet":"Sheet1"
+   },
+   "range": "B3:D8"
+}

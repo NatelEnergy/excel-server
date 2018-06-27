@@ -1,0 +1,8 @@
+{
+   "sheet":{
+      "source": "gs",      
+      "path":"genmodels/SLH_simple_calculator_v32.xlsx",
+      "defaultSheet":"LPconfigs"
+   },
+   "range": "C3:S29"
+}

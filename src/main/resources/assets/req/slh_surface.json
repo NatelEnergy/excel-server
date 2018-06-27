@@ -1,0 +1,48 @@
+{
+   "sheet":{
+      "source": "gs",      
+      "path":"genmodels/SLH_simple_calculator_v32.xlsx",
+      "defaultSheet":"LinearPelton"
+   },
+   "setup":{
+      "E3":"LPconfigs!G6",
+      "D4":"LPconfigs!G7",
+      "D5":"LPconfigs!G8",
+      "D6":"LPconfigs!G9",
+      "D7":"LPconfigs!G10",
+      "D8":"LPconfigs!G11",
+      "D9":"LPconfigs!G12",
+      "D10":"LPconfigs!G13",
+      "D11":"LPconfigs!G14",
+      "D12":"LPconfigs!G15",
+      "D13":"LPconfigs!G16",
+      "D14":"LPconfigs!G17",
+      "D15":"LPconfigs!G18",
+      "D16":"LPconfigs!G19",
+      "D17":"LPconfigs!G20",
+      "D18":"LPconfigs!G21",
+      "D19":"LPconfigs!G22",
+      "D20":"LPconfigs!G23",
+      "D21":"LPconfigs!G24",
+      "D22":"LPconfigs!G25",
+      "D23":"LPconfigs!G26",
+      "D24":"LPconfigs!G27"
+   },
+	 "sweep":[
+	    { "cell": "D37", "min":"D5",  "max":"D4",  "steps":20 },
+	    { "cell": "D38", "min":"D54", "max":"D56", "steps":20 }
+	 ],
+	 "read":[
+	    "D91",
+	    "D92",
+	    "D93",
+	    "D94",
+	    "D95",
+	    "D96",
+	    "D97",
+	    "D98",
+	    "D99",
+	    "D100",
+	    "D101"
+	 ]
+}

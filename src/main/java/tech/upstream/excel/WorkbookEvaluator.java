@@ -1,0 +1,356 @@
+package tech.upstream.excel;
+
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.concurrent.NotThreadSafe;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.ClientAnchor;
+import org.apache.poi.ss.usermodel.Comment;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.Drawing;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.RichTextString;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Row.MissingCellPolicy;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.hssf.util.CellReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.api.client.repackaged.com.google.common.base.Throwables;
+
+import tech.upstream.excel.api.CellValueRange;
+import tech.upstream.excel.api.EvaluateResponse;
+import tech.upstream.excel.api.Evaluation;
+import tech.upstream.excel.api.EvaluationResult;
+import tech.upstream.excel.api.ReadRequest;
+import tech.upstream.excel.api.ReadResponse;
+import tech.upstream.excel.api.SurfaceRequest;
+import tech.upstream.excel.api.SurfaceResponse;
+
+/**
+ * Loads a workbook and performs evaluations
+ */
+@NotThreadSafe
+public class WorkbookEvaluator {
+  private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+  public final Sheet sheet;
+  public final FormulaEvaluator eval;
+  
+  // Useful so we can hang on to the sheet
+  public EvaluateResponse evaluations;
+  public SurfaceResponse surface;
+  public ReadResponse read;
+  
+  CreationHelper factory = null;
+  Drawing<?> drawing = null;
+  
+  public WorkbookEvaluator(Sheet sheet) {
+    this.sheet = sheet;
+    eval = this.sheet.getWorkbook().getCreationHelper().createFormulaEvaluator();
+  }
+
+  //---------------------------------------------------------------------------
+  // Helper Methods
+  //---------------------------------------------------------------------------
+  
+  public Cell getCell(CellReference ref) {
+    Sheet s = sheet;
+    if(ref.getSheetName()!=null) {
+      s = sheet.getWorkbook().getSheet(ref.getSheetName());
+    }
+    Row row = s.getRow(ref.getRow());
+    if(row==null) {
+      return null;
+    }
+    return row.getCell(ref.getCol());
+  }
+  
+  public Object getCellValue(Cell cell) {
+    if(cell==null) {
+      return null;
+    }
+    switch(cell.getCellTypeEnum()) {
+      case FORMULA:
+      case NUMERIC: return cell.getNumericCellValue();
+      case BOOLEAN: return cell.getBooleanCellValue();
+      case BLANK:   return null;
+      default:
+    }
+    return cell.getStringCellValue();
+  }
+
+  public double getNumericValue(Object v) {
+    if(v instanceof Number) {
+      return ((Number)v).doubleValue();
+    }
+    Cell cell = getCell(new CellReference(v.toString()));
+    return cell.getNumericCellValue();
+  }
+  
+  public boolean isNumeric(CellReference ref) {
+    return getCell(ref).getCellTypeEnum() == CellType.NUMERIC;
+  }
+  
+  private void setCellValue(Cell cell, Object v) {
+    // If the string references another cell, use its value
+    if(v instanceof String) {
+      Cell source = getCell( new CellReference((String)v) );
+      if(source!=null) {
+        switch(source.getCellTypeEnum()) {
+        case NUMERIC: v = source.getNumericCellValue(); break;
+        case STRING: v = source.getStringCellValue(); break;
+        default:
+          throw new IllegalArgumentException("Unable to copy value from: "+source + " // " + source.getCellTypeEnum() +" // " + v );
+        }
+      }
+    }
+    
+    switch(cell.getCellTypeEnum()) {
+    case NUMERIC: cell.setCellValue((double)v); break;
+    case BLANK:
+    case STRING: cell.setCellValue(v.toString()); break;
+    default:
+      throw new IllegalArgumentException("Don't know how to write: "+cell.getCellTypeEnum() +" cells // " + cell + " (set:"+v+")" );
+    }
+  }
+
+  private void setComment(Cell cell, String text)
+  {
+    if(factory==null) {
+      Workbook wb = sheet.getWorkbook();
+      factory = wb.getCreationHelper();
+      drawing = sheet.createDrawingPatriarch();
+    }
+    
+    Comment old = cell.getCellComment();
+    if(old != null) {
+      RichTextString v = old.getString();
+      old.setString(factory.createRichTextString( v.getString() + " & " 
+          + text.substring(text.lastIndexOf(':')+1).trim() ));
+      return;
+    }
+    
+    // When the comment box is visible, have it show in a 1x5 space
+    ClientAnchor anchor = factory.createClientAnchor();
+    anchor.setCol1(cell.getColumnIndex()+1);
+    anchor.setCol2(cell.getColumnIndex()+6);
+    anchor.setRow1(cell.getRow().getRowNum());
+    anchor.setRow2(cell.getRow().getRowNum()+1);
+
+    // Create the comment and set the text+author
+    Comment comment = drawing.createCellComment(anchor);
+    RichTextString str = factory.createRichTextString(text);
+    comment.setString(str);
+    comment.setAuthor("wOS");
+    comment.setVisible(true);
+
+    // Assign the comment to the cell
+    cell.setCellComment(comment);
+  }
+  
+  //---------------------------------------------------------------------------
+  // Calculators
+  //---------------------------------------------------------------------------
+  
+  public void write(HashMap<String, Object> cells, String annotate) {
+    if(cells != null) {
+      for(Map.Entry<String,Object> entry : cells.entrySet()) {
+        try {
+          Cell cell = this.getCell(new CellReference(entry.getKey()));
+          if(cell == null) {
+            throw new IllegalArgumentException("Can not write cell: "+entry.getKey());
+          }
+          setCellValue(cell,entry.getValue());
+          if(annotate!=null) {
+            setComment(cell, "Write["+annotate+"] "+entry.getKey()+"="+entry.getValue());
+          }
+        }
+        catch(Exception ex) {
+          if(annotate!=null) {
+            LOGGER.warn("TODO, add error annotatoin?", ex);
+          }
+          else {
+            Throwables.propagate(ex);
+          }
+        }
+      }
+    }
+  }
+  
+  public HashMap<String, Object> read(List<String> cells, String annotate) {
+    HashMap<String, Object> values = new HashMap<>();
+    if(cells != null) {
+      for(String ref : cells) {
+        try {
+          Cell cell = this.getCell(new CellReference(ref));
+          if(cell == null) {
+            throw new IllegalArgumentException("Can not write cell: "+ref);
+          }
+          values.put(ref, getCellValue(cell));
+          if(annotate!=null) {
+            setComment(cell, "Read["+annotate+"]");
+          }
+        }
+        catch(Exception ex) {
+          if(annotate!=null) {
+            LOGGER.warn("TODO, add error annotatoin?", ex);
+          }
+          else {
+            Throwables.propagate(ex);
+          }
+        }
+      }
+    }
+    return values;
+  }
+  
+  public ReadResponse read(ReadRequest req) {
+    ReadResponse rsp = new ReadResponse();
+    CellRangeAddress address = CellRangeAddress.valueOf(req.range);
+    rsp.cols = new ArrayList<>(address.getLastColumn()-address.getLastColumn());
+    rsp.rows = new ArrayList<>(address.getLastRow()-address.getFirstRow());
+    boolean first = true;
+    for(int r=address.getFirstRow(); r<address.getLastRow(); r++) {
+      Row row = sheet.getRow(r);
+      List<Object> vals = new ArrayList<>(rsp.cols.size());
+      for(int c=address.getFirstColumn(); c<address.getLastColumn(); c++) {
+        Cell cell = row.getCell(c, MissingCellPolicy.RETURN_NULL_AND_BLANK);
+        vals.add(getCellValue(cell));
+        if(first) {
+          rsp.cols.add( new org.apache.poi.ss.util.CellReference(cell).formatAsString());
+        }
+      }
+      rsp.rows.add(vals);
+      first = false;
+    }
+    return rsp;
+  }
+
+  public EvaluationResult evaluate(Evaluation req, String annotate) {
+    if(req.read==null || req.read.size()==0) {
+      throw new IllegalArgumentException("Evaluation requires at least one 'read' cell");
+    }
+    
+    write(req.write, annotate);
+    eval.clearAllCachedResultValues();
+    
+    EvaluationResult res = new EvaluationResult();
+    res.refId = req.refId;
+    res.values = read(req.read, annotate);
+    return res;
+  }
+  
+  public static class SurfaceSweeper {
+    public Cell cell;
+    public double[] values;
+    public int index = 0;
+    public double step = 0;
+    public SurfaceSweeper next;
+    public CellValueRange config;
+  }
+
+  public SurfaceSweeper prepare(CellValueRange cfg) {
+    SurfaceSweeper sweeper = new SurfaceSweeper();
+    sweeper.cell = this.getCell(new CellReference(cfg.cell));
+    double _min = this.getNumericValue(cfg.min);
+    double _max = this.getNumericValue(cfg.max);
+    double diff = _max-_min;
+    if(cfg.steps==null) {
+      cfg.steps = 25;
+    }
+    sweeper.step = diff / (double)cfg.steps;
+    
+    int len = (int)(Math.floor(diff / sweeper.step))+1;
+    sweeper.values = new double[len];
+    double val = _min;
+    for(int i=0; i<len; i++) {
+      sweeper.values[i] = val;
+      val += sweeper.step;
+    }
+    sweeper.index = 0;
+    sweeper.config = cfg;
+    return sweeper;
+  }
+  
+  public SurfaceResponse calculateSurface(SurfaceRequest req, String annotate)
+  { 
+    eval.clearAllCachedResultValues();
+    
+    final List<Cell> input = new ArrayList<>(req.sweep.size());
+    final List<Cell> output = new ArrayList<>(req.read.size());
+    final List<Cell> all = new ArrayList<>(input.size()+output.size());
+    
+    SurfaceResponse rsp = new SurfaceResponse();
+    rsp.cells = new ArrayList<>(all.size());
+    
+    int len = 1;
+    SurfaceSweeper first = null;
+    SurfaceSweeper trav = null;
+    for(CellValueRange r : req.sweep) {
+      SurfaceSweeper tmp = prepare(r);
+      len *= tmp.values.length;
+      if(first==null) {
+        first = tmp;
+      }
+      if(trav!=null) {
+        trav.next = tmp;
+      }
+      if(annotate != null) {
+        this.setComment(tmp.cell, "Sweep: "+r.toString());
+      }
+      input.add(tmp.cell);
+      rsp.cells.add(r.cell);
+      trav = tmp;
+    }
+    rsp.values = new ArrayList<>(len+1);
+    rsp.cells.addAll(req.read);
+    for(String ref : req.read) {
+      Cell cell = this.getCell(new CellReference(ref));
+      output.add( cell );
+      if(annotate != null) {
+        this.setComment(cell, "read");
+      }
+    }
+    all.addAll(input);
+    all.addAll(output);
+    
+    while(true) {
+      // Increment the index of a single item, then sweep all of the first ones
+      boolean changed = false;
+      trav = first.next;
+      while(trav != null) {
+        setCellValue(trav.cell, trav.values[trav.index]);
+        if(!changed && trav.index < (trav.values.length-1)) {
+          trav.index++;
+          changed = true;
+        }
+        trav = trav.next;
+      }
+      
+      // Calculate all values for the first variable
+      for(double v : first.values) {
+        setCellValue(first.cell, v);
+        
+        // Read all the values
+        eval.clearAllCachedResultValues();
+        List<Object> vals = new ArrayList<>(all.size());
+        for(Cell c : all) {
+          vals.add(getCellValue(c));
+        }
+        rsp.values.add(vals);
+      }
+      
+      if(!changed) {
+        return rsp;
+      }
+    }
+  }
+}

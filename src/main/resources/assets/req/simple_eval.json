@@ -1,0 +1,27 @@
+{
+   "sheet":{
+      "source": "assets",
+      "path":"simple.xlsx",
+      "defaultSheet":"Sheet1"
+   },
+   "setup":{
+      "B4":"5",
+      "B6":"6",
+      "B7":"B4"
+   },
+   "evaluations":[
+      {
+         "refId":"AnOptionalUniqueID",
+         "write":{
+            "B8":4.5
+         },
+         "read":[
+            "D4",
+            "D5",
+            "D6",
+            "D7",
+            "D8"
+         ]
+      }
+   ]
+}
