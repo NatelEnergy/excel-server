@@ -8,6 +8,7 @@ import java.util.Map;
 import javax.annotation.concurrent.NotThreadSafe;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.ss.usermodel.CreationHelper;
@@ -77,14 +78,15 @@ public class WorkbookEvaluator {
     if(cell==null) {
       return null;
     }
-    switch(cell.getCellTypeEnum()) {
+    CellValue val = eval.evaluate(cell);
+    switch(val.getCellTypeEnum()) {
       case FORMULA:
-      case NUMERIC: return cell.getNumericCellValue();
-      case BOOLEAN: return cell.getBooleanCellValue();
+      case NUMERIC: return val.getNumberValue();
+      case BOOLEAN: return val.getBooleanValue();
       case BLANK:   return null;
       default:
     }
-    return cell.getStringCellValue();
+    return val.getStringValue();
   }
 
   public double getNumericValue(Object v) {
@@ -92,7 +94,11 @@ public class WorkbookEvaluator {
       return ((Number)v).doubleValue();
     }
     Cell cell = getCell(new CellReference(v.toString()));
-    return cell.getNumericCellValue();
+    Object out = getCellValue(cell);
+    if(out instanceof Number) {
+      return ((Number)out).doubleValue();
+    }
+    throw new IllegalArgumentException("Can not get numeric value from: "+v);
   }
   
   public boolean isNumeric(CellReference ref) {

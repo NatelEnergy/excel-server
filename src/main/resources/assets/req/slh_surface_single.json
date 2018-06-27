@@ -29,8 +29,8 @@
     "D24":"LPconfigs!G27"
   },
   "nullValueIfBelow": 0.01,
-  "x": { "cell": "D37", "min":"D5",  "max":"D4",  "steps":20 },
-  "y": { "cell": "D38", "min":"D54", "max":"D56", "steps":20 },
+  "x": { "cell": "D38", "min": 0,   "max": 0.876, "steps":50 },
+  "y": { "cell": "D37", "min":"D5", "max": "D4",  "steps":50 },
   "read": [
     "D99"
   ]
