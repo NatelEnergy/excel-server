@@ -264,13 +264,15 @@ public class WorkbookEvaluator {
     public double[] values;
     public int index = 0;
     public double step = 0;
-    public SurfaceSweeper next;
-    public CellValueRange config;
   }
 
-  public SurfaceSweeper prepare(CellValueRange cfg) {
+  public SurfaceSweeper prepare(CellValueRange cfg, String annotate) {
     SurfaceSweeper sweeper = new SurfaceSweeper();
     sweeper.cell = this.getCell(new CellReference(cfg.cell));
+    if(annotate!=null) {
+      this.setComment(sweeper.cell, annotate + ": "+ cfg.toString());
+    }
+    
     double _min = this.getNumericValue(cfg.min);
     double _max = this.getNumericValue(cfg.max);
     double diff = _max-_min;
@@ -287,41 +289,22 @@ public class WorkbookEvaluator {
       val += sweeper.step;
     }
     sweeper.index = 0;
-    sweeper.config = cfg;
     return sweeper;
   }
   
   public SurfaceResponse calculateSurface(SurfaceRequest req, String annotate)
   { 
     eval.clearAllCachedResultValues();
-    
-    final List<Cell> input = new ArrayList<>(req.sweep.size());
+
+    final SurfaceResponse rsp = new SurfaceResponse();
     final List<Cell> output = new ArrayList<>(req.read.size());
-    final List<Cell> all = new ArrayList<>(input.size()+output.size());
+    final SurfaceSweeper xvals = prepare(req.x, annotate+" X");
+    final SurfaceSweeper yvals = prepare(req.y, annotate+" Y");
+    rsp.x = xvals.values;
+    rsp.y = yvals.values;
+    rsp.z = new ArrayList<List<Object>>(yvals.values.length+1);
     
-    SurfaceResponse rsp = new SurfaceResponse();
-    rsp.cells = new ArrayList<>(all.size());
-    
-    int len = 1;
-    SurfaceSweeper first = null;
-    SurfaceSweeper trav = null;
-    for(CellValueRange r : req.sweep) {
-      SurfaceSweeper tmp = prepare(r);
-      len *= tmp.values.length;
-      if(first==null) {
-        first = tmp;
-      }
-      if(trav!=null) {
-        trav.next = tmp;
-      }
-      if(annotate != null) {
-        this.setComment(tmp.cell, "Sweep: "+r.toString());
-      }
-      input.add(tmp.cell);
-      rsp.cells.add(r.cell);
-      trav = tmp;
-    }
-    rsp.values = new ArrayList<>(len+1);
+    rsp.cells = new ArrayList<>(output.size());
     rsp.cells.addAll(req.read);
     for(String ref : req.read) {
       Cell cell = this.getCell(new CellReference(ref));
@@ -330,38 +313,40 @@ public class WorkbookEvaluator {
         this.setComment(cell, "read");
       }
     }
-    all.addAll(input);
-    all.addAll(output);
     
-    while(true) {
-      // Increment the index of a single item, then sweep all of the first ones
-      boolean changed = false;
-      trav = first.next;
-      while(trav != null) {
-        setCellValue(trav.cell, trav.values[trav.index]);
-        if(!changed && trav.index < (trav.values.length-1)) {
-          trav.index++;
-          changed = true;
-        }
-        trav = trav.next;
-      }
-      
-      // Calculate all values for the first variable
-      for(double v : first.values) {
-        setCellValue(first.cell, v);
-        
-        // Read all the values
+    double threshold = Double.MIN_VALUE;
+    if(req.nullValueIfBelow != null) {
+      threshold = req.nullValueIfBelow.doubleValue();
+    }
+    
+    for(double y : yvals.values) {
+      setCellValue(yvals.cell, y);
+      List<Object> row = new ArrayList<Object>(xvals.values.length);
+      for(double x : xvals.values) {
+        setCellValue(xvals.cell, x);
         eval.clearAllCachedResultValues();
-        List<Object> vals = new ArrayList<>(all.size());
-        for(Cell c : all) {
-          vals.add(getCellValue(c));
+        if(output.size()==1) {
+          row.add(getSurfaceValue(threshold,getCellValue(output.get(0))));
         }
-        rsp.values.add(vals);
+        else {
+          List<Object> values = new ArrayList<Object>(output.size());
+          for(Cell cell : output) {
+            values.add(getSurfaceValue(threshold,getCellValue(cell)));
+          }
+          row.addAll(values);
+        }
       }
-      
-      if(!changed) {
-        return rsp;
+      rsp.z.add(row);
+    }
+    return rsp;
+  }
+  
+  private Object getSurfaceValue(double threshold, Object v) {
+    if(v instanceof Number) {
+      if(((Number)v).doubleValue() < threshold) {
+        return null;
       }
     }
+    return v;
   }
 }

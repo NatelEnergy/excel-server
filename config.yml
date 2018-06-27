@@ -1,7 +1,7 @@
 
 googleCloudStorage:
   name: gs
-  bucket: ${GCLOUD_BUCKET_NAME:upstream-excel-sheets}
+  bucket: upstream-excel-sheets
 
 swagger:
   resourcePackage: tech.upstream.excel

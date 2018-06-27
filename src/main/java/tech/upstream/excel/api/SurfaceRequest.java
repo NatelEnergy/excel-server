@@ -13,11 +13,24 @@ public class SurfaceRequest extends BaseRequest {
     value = "Calculate all permutations of these cells",
     required = true
   )
-  public List<CellValueRange> sweep;
+  public CellValueRange x;
+
+  @ApiModelProperty(
+    value = "Calculate all permutations of these cells",
+    required = true
+  )
+  public CellValueRange y;
   
   @ApiModelProperty(
     value = "List of cell valus to return",
     required = true
   )
   public List<String> read;
+  
+
+  @ApiModelProperty(
+    value = "Remove values below some threshold",
+    required = false
+  )
+  public Double nullValueIfBelow;
 }

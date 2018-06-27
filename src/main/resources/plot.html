@@ -1,0 +1,14 @@
+<head>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+  <div id="myDiv"></div>
+  <script>
+    var data = [{SURFACE}];
+    data[0].type = 'contour';
+    var layout = {
+      // ??
+    };
+    Plotly.newPlot('myDiv', data, layout);
+  </script>
+</body>

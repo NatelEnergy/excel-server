@@ -97,7 +97,7 @@ public class ExcelServerApplication extends Application<ExcelServerConfiguration
     if(configuration.googleCloudStorage!=null) {
       locator.register(new CloudStorageLoader(configuration.googleCloudStorage, f));
     }
-    SheetResource eval = new SheetResource(locator);
+    SheetResource eval = new SheetResource(locator, environment.getObjectMapper());
     
     environment.healthChecks().register("simple", new SimpleHealthCheck());
     environment.admin().addTask(new EchoTask());

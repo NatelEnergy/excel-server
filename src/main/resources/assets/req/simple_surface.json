@@ -8,14 +8,10 @@
       "B4":5,
       "B6":6
    },
-	 "sweep":[
-	    { "cell": "B5", "min":5, "max":6, "steps":20 },
-	    { "cell": "B6", "min":8, "max":9, "steps":20 }
-	 ],
+   "nullValueIfBelow": 5.1,
+	 "x": { "cell": "B5", "min":5, "max":6, "steps":20 },
+	 "y": { "cell": "B6", "min":8, "max":9, "steps":20 },
 	 "read":[
-	    "C5",
-      "C6",
-      "D6",
-      "D6"
+	    "B5"
 	 ]
 }

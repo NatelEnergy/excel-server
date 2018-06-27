@@ -28,19 +28,18 @@ public class CellValueRange {
   )
   public Object max;
 
-//  @ApiModelProperty(
-//    value = "Increment value from min to max", 
-//    example = "0.1",
-//    required = false
-//  )
-//  public Double step;
-
   @ApiModelProperty(
     value = "Rather than passing the exact increment, calculate it", 
     example = "50",
     required = false
   )
   public Integer steps;
+
+  @ApiModelProperty(
+    value = "Optional label used in plot", 
+    required = false
+  )
+  public String label;
   
   @Override
   public String toString() {

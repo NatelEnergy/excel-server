@@ -1,6 +1,9 @@
 package tech.upstream.excel.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.util.Charsets;
+
 import tech.upstream.excel.WorkbookEvaluator;
 import tech.upstream.excel.WorkbookLocator;
 import tech.upstream.excel.api.BaseRequest;
@@ -12,6 +15,7 @@ import tech.upstream.excel.api.ReadResponse;
 import tech.upstream.excel.api.SurfaceRequest;
 import tech.upstream.excel.api.SurfaceResponse;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +29,7 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.Response;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -43,9 +48,11 @@ public class SheetResource {
   private static AtomicLong counter = new AtomicLong(5000);
   
   public final WorkbookLocator locator;
+  public final ObjectMapper objectMapper;
 
-  public SheetResource(WorkbookLocator locator) {
+  public SheetResource(WorkbookLocator locator, ObjectMapper objectMapper) {
     this.locator = locator;
+    this.objectMapper = objectMapper;
   }
 
   public WorkbookEvaluator run(BaseRequest req, boolean annotate) {
@@ -156,5 +163,25 @@ public class SheetResource {
       }
     };
     return Response.ok(stream).header("content-disposition","attachment; filename = evaluate.xlsx").build();
+  }
+
+  @POST
+  @Path("/surface.html")
+  @ApiOperation(value = "Plot the surface ", 
+    notes = "note this only works with a single response cell"
+  )
+  @Produces(MediaType.TEXT_HTML)
+  public Response surfacePlot(SurfaceRequest req) throws Exception {
+    if(req.read.size()>1) {
+      throw new IllegalArgumentException("Surface plot only works with a single return cell");
+    }
+    ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+    InputStream stream = classloader.getResourceAsStream("plot.html");
+    
+    final WorkbookEvaluator ex = run(req, false);
+    final String json = objectMapper.writeValueAsString(ex.surface);
+    final String template = IOUtils.toString(stream, Charsets.UTF_8);
+    final String html = template.replace("{SURFACE}", json);
+    return Response.ok(html).build();
   }
 }

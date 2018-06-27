@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @JsonInclude(Include.NON_NULL)
 public class SurfaceResponse {
+  public double[] x;
+  public double[] y;
+  public List<List<Object>> z;
   public List<String> cells;
-  public List<List<Object>> values;
 }

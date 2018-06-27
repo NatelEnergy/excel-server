@@ -100,7 +100,8 @@ public class ExampleResource {
   @GET
   @Path("/surface-request")
   public SurfaceRequest getSurfaceRequest() throws IOException {
-    return loadAssetSurfaceRequestExample("req/simple_surface.json");
+    //return loadAssetSurfaceRequestExample("req/simple_surface.json");
+    return loadAssetSurfaceRequestExample("req/slh_surface_single.json");
   }
   
   @GET
@@ -113,6 +114,13 @@ public class ExampleResource {
   @Path("/surface-response.xslt")
   public Response getSurfaceResponseXSLT() throws IOException {
     return eval.surfaceAndGetWorkbook(getSurfaceRequest());
+  }
+
+  @GET
+  @Path("/surface-plot.html")
+  @Produces(MediaType.TEXT_HTML)
+  public Response getSurfacePlot() throws Exception {
+    return eval.surfacePlot(getSurfaceRequest());
   }
   
   @GET
