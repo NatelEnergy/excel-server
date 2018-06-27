@@ -33,9 +33,11 @@ jobs:
           key: v1-dependencies-{{ checksum "pom.xml" }}
         
       - run: 
-          - mvn clean install
-          - mkdir dist
-          - mv target/*.jar dist
+          name: Test and Build
+          command: |
+            mvn clean install
+            mkdir dist
+            mv target/*.jar dist
 
       - store_artifacts:
           path: dist
