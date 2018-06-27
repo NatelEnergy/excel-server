@@ -100,8 +100,8 @@ public class ExampleResource {
   @GET
   @Path("/surface-request")
   public SurfaceRequest getSurfaceRequest() throws IOException {
-    //return loadAssetSurfaceRequestExample("req/simple_surface.json");
-    return loadAssetSurfaceRequestExample("req/slh_surface_single.json");
+    return loadAssetSurfaceRequestExample("req/simple_surface.json");
+    //return loadAssetSurfaceRequestExample("req/slh_surface_single.json");
   }
   
   @GET
