@@ -1,6 +1,7 @@
 package tech.upstream.excel;
 
 import java.lang.invoke.MethodHandles;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -279,9 +280,6 @@ public class WorkbookEvaluator {
   public SurfaceSweeper prepare(CellValueRange cfg, String annotate) {
     SurfaceSweeper sweeper = new SurfaceSweeper();
     sweeper.cell = this.getCell(new CellReference(cfg.cell));
-    if(annotate!=null) {
-      this.setComment(sweeper.cell, annotate + ": "+ cfg.toString());
-    }
     
     double _min = this.getNumericValue(cfg.min);
     double _max = this.getNumericValue(cfg.max);
@@ -291,6 +289,14 @@ public class WorkbookEvaluator {
     }
     sweeper.step = diff / (double)cfg.steps;
     
+    if(annotate!=null) {
+      NumberFormat nf = NumberFormat.getNumberInstance();
+      nf.setMaximumFractionDigits(3);
+      
+      this.setComment(sweeper.cell, annotate
+       + " ["+nf.format(_min) + " to "+nf.format(_max) +"] each: "+sweeper.step + " // " + cfg.toString());
+    }
+        
     int len = (int)(Math.floor(diff / sweeper.step))+1;
     sweeper.values = new double[len];
     double val = _min;

@@ -10,6 +10,7 @@ import tech.upstream.excel.api.BaseRequest;
 import tech.upstream.excel.api.EvaluateRequest;
 import tech.upstream.excel.api.EvaluateResponse;
 import tech.upstream.excel.api.Evaluation;
+import tech.upstream.excel.api.EvaluationResult;
 import tech.upstream.excel.api.ReadRequest;
 import tech.upstream.excel.api.ReadResponse;
 import tech.upstream.excel.api.SurfaceRequest;
@@ -33,8 +34,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.swagger.annotations.*;
@@ -68,7 +70,7 @@ public class SheetResource {
       if(ereq.evaluations == null || ereq.evaluations.size()==0) {
         throw new IllegalArgumentException("request is missing evaluations");
       }
-      Set<Object> ids = new HashSet<>();
+      Map<String, Object> byRef = new HashMap<>();
       eval.evaluations = new EvaluateResponse();
       eval.evaluations.evaluations = new ArrayList<>(ereq.evaluations.size()+1);
       for(Evaluation r : ereq.evaluations) {
@@ -76,10 +78,30 @@ public class SheetResource {
         if(r.refId == null) {
           counter.get();
         }
-        if(!ids.add(r.refId)) {
-          throw new IllegalArgumentException("Duplicate Evaluatoin RefIDs found: "+ids.toString());
+        String k = r.refId.toString();
+        if(byRef.containsKey(k)) {
+          throw new IllegalArgumentException("Duplicate Evaluatoin RefIDs found: "+byRef.keySet().toString());
         }
-        eval.evaluations.evaluations.add( eval.evaluate(r, annotate?r.refId.toString():null) );
+        int count = r.read.size();
+        EvaluationResult res = eval.evaluate(r, annotate?r.refId.toString():null);
+        if(res.values.size()>0) {
+          List<Object> out = new ArrayList<>(count);
+          for(String s : r.read) {
+            out.add(res.values.get(s));
+          }
+          if(out.size()==1) {
+            byRef.put(k, out.get(0));
+          }
+          else {
+            byRef.put(k, out);
+          }
+        }
+        eval.evaluations.evaluations.add( res );
+      }
+      
+      // An easier result to work with
+      if(byRef.size()>0) {
+        eval.evaluations.results = byRef;
       }
     }
     else if(req instanceof SurfaceRequest) {
