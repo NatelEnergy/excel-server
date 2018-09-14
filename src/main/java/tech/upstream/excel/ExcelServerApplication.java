@@ -10,6 +10,7 @@ import io.federecio.dropwizard.swagger.*;
 import tech.upstream.excel.health.SimpleHealthCheck;
 import tech.upstream.excel.loader.AssetWorkbookLoader;
 import tech.upstream.excel.loader.CloudStorageLoader;
+import tech.upstream.excel.loader.FileWorkbookLoader;
 import tech.upstream.excel.resources.SheetResource;
 import tech.upstream.excel.resources.ExampleResource;
 import tech.upstream.excel.tasks.EchoTask;
@@ -94,6 +95,7 @@ public class ExcelServerApplication extends Application<ExcelServerConfiguration
     final File f = new File("cache");
     WorkbookLocator locator = new WorkbookLocator();
     locator.register(new AssetWorkbookLoader());
+    locator.register(new FileWorkbookLoader());
     if(configuration.googleCloudStorage!=null) {
       locator.register(new CloudStorageLoader(configuration.googleCloudStorage, f));
     }
