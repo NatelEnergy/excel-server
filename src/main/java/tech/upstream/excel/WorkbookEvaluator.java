@@ -106,9 +106,13 @@ public class WorkbookEvaluator {
   }
   
   private void setCellValue(Cell cell, Object v) {
-    // If the string references another cell, use its value
+    // If the string references another cell, try to parse it
     if(v instanceof String) {
-      Cell source = getCell( new CellReference((String)v) );
+      Cell source = null;
+      try {
+        source = getCell( new CellReference((String)v) );
+      }
+      catch(Exception ex) { } // Ignore
       if(source!=null) {
         switch(source.getCellTypeEnum()) {
         case NUMERIC: v = source.getNumericCellValue(); break;
