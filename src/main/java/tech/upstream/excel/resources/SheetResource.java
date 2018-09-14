@@ -114,7 +114,7 @@ public class SheetResource {
   }
 
   @POST
-  @Path("/evaluate.xslx")
+  @Path("/evaluate.xlsx")
   @ApiOperation(value = "Get annotated workbook", 
     notes = "Returns workbook with cell annotations based on the request parameters"
   )
@@ -145,7 +145,7 @@ public class SheetResource {
   }
 
   @POST
-  @Path("/surface.xslx")
+  @Path("/surface.xlsx")
   @ApiOperation(value = "Get annotated surface workbook", 
     notes = "Returns workbook with cell annotations based on the request parameters"
   )

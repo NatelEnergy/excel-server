@@ -91,8 +91,8 @@ public class ExampleResource {
   }
 
   @GET
-  @Path("/evaluate-response.xslt")
-  public Response getEvaluateResponseXSLT() throws IOException {
+  @Path("/evaluate-response.xlsx")
+  public Response getEvaluateResponseXLSX() throws IOException {
     return eval.evaluateAndGetWorkbook(getEvaluateRequest());
   }
   
@@ -111,8 +111,8 @@ public class ExampleResource {
   }
 
   @GET
-  @Path("/surface-response.xslt")
-  public Response getSurfaceResponseXSLT() throws IOException {
+  @Path("/surface-response.xlsx")
+  public Response getSurfaceResponseXLSX() throws IOException {
     return eval.surfaceAndGetWorkbook(getSurfaceRequest());
   }
 
