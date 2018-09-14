@@ -13,6 +13,7 @@ import tech.upstream.excel.loader.CloudStorageLoader;
 import tech.upstream.excel.loader.FileWorkbookLoader;
 import tech.upstream.excel.resources.SheetResource;
 import tech.upstream.excel.resources.ExampleResource;
+import tech.upstream.excel.resources.InfoResource;
 import tech.upstream.excel.tasks.EchoTask;
 import tech.upstream.excel.util.IllegalArgumentExceptionMapper;
 
@@ -107,5 +108,6 @@ public class ExcelServerApplication extends Application<ExcelServerConfiguration
     environment.jersey().register(RolesAllowedDynamicFeature.class);
     environment.jersey().register(eval);
     environment.jersey().register(new ExampleResource(eval, environment.getObjectMapper()));
+    environment.jersey().register(new InfoResource(environment.getObjectMapper()));
   }
 }
