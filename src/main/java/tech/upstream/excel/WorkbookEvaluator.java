@@ -116,6 +116,7 @@ public class WorkbookEvaluator {
       catch(Exception ex) { } // Ignore
       if(source!=null) {
         switch(source.getCellTypeEnum()) {
+        case FORMULA:
         case NUMERIC: v = source.getNumericCellValue(); break;
         case STRING: v = source.getStringCellValue(); break;
         default:
@@ -123,7 +124,7 @@ public class WorkbookEvaluator {
         }
       }
     }
-    
+
     switch(cell.getCellTypeEnum()) {
     case FORMULA: 
       cell.setCellType(CellType.NUMERIC);
