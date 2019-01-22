@@ -71,8 +71,7 @@ public class IntegrationTest {
     assertThat(res.values.get( "D4" )).isEqualTo(11.0);
     
     // Simple math
-    assertThat(res.values.get( "D6" )).isEqualTo(6.0);
-    
+    assertThat(res.values.get( "D5" )).isEqualTo(6.0);
     
     System.out.println( "RSP: "+ RULE.getObjectMapper().writeValueAsString(rsp));
   }
