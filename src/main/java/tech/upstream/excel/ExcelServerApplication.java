@@ -86,8 +86,8 @@ public class ExcelServerApplication extends Application<ExcelServerConfiguration
 
     // Configure CORS parameters
     cors.setInitParameter("allowedOrigins", "*");
-    cors.setInitParameter("allowedHeaders", "X-Requested-With,Content-Type,Accept,Origin");
-    cors.setInitParameter("allowedMethods", "OPTIONS,GET,PUT,POST,DELETE,HEAD");
+    cors.setInitParameter("allowedHeaders", "*"); //X-Requested-With,Content-Type,Content-Length,Accept,Origin,Authorization");
+    cors.setInitParameter("allowedMethods", "OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD");
 
     // Add URL mapping
     cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
