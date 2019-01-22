@@ -6,6 +6,7 @@ import tech.upstream.excel.ExcelServerApplication;
 import tech.upstream.excel.ExcelServerConfiguration;
 import tech.upstream.excel.api.EvaluateRequest;
 import tech.upstream.excel.api.EvaluateResponse;
+import tech.upstream.excel.api.EvaluationResult;
 import tech.upstream.excel.resources.ExampleResource;
 
 import org.apache.poi.hssf.util.CellReference;
@@ -64,13 +65,16 @@ public class IntegrationTest {
     
     final EvaluateResponse rsp = postRequest(req);
     
+    EvaluationResult res = rsp.evaluations.get(0);
+    
+    // Setting a formula works
+    assertThat(res.values.get( "D4" )).isEqualTo(11.0);
+    
+    // Simple math
+    assertThat(res.values.get( "D6" )).isEqualTo(6.0);
+    
+    
     System.out.println( "RSP: "+ RULE.getObjectMapper().writeValueAsString(rsp));
-      
-//    final Person person = new Person("Dr. IntegrationTest", "Chief Wizard");
-//    final Person newPerson = postPerson(person);
-//    final String url = "http://localhost:" + RULE.getLocalPort() + "/people/" + newPerson.getId() + "/" + viewName;
-//    Response response = RULE.client().target(url).request().get();
-//    assertThat(response.getStatus()).isEqualTo(HttpStatus.OK_200);
   }
 
   private EvaluateResponse postRequest(EvaluateRequest req) {

@@ -125,6 +125,10 @@ public class WorkbookEvaluator {
     }
     
     switch(cell.getCellTypeEnum()) {
+    case FORMULA: 
+      cell.setCellType(CellType.NUMERIC);
+      // Fall through to normal Numeric handling
+      
     case NUMERIC: {
       if(v instanceof Number) {
         cell.setCellValue(((Number)v).doubleValue()); 
