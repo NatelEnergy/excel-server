@@ -5,6 +5,16 @@
 Simple web service to execute exel spreadsheets.
 
 
+# Build and Run with maven
+
+```
+mvn clean install
+mvn exec:java
+```
+
+This will start the host running on:
+http://localhost:8080/
+
 
 # Build / Deploy Docker
 
