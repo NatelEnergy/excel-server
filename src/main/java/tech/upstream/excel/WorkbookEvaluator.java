@@ -116,8 +116,8 @@ public class WorkbookEvaluator {
       catch(Exception ex) { } // Ignore
       if(source!=null) {
         switch(source.getCellTypeEnum()) {
-        case FORMULA:
         case NUMERIC: v = source.getNumericCellValue(); break;
+        case FORMULA: v = getCellValue(source); break;
         case STRING: v = source.getStringCellValue(); break;
         default:
           throw new IllegalArgumentException("Unable to copy value from: "+source + " // " + source.getCellTypeEnum() +" // " + v );
