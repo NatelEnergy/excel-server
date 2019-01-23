@@ -117,13 +117,14 @@ public class WorkbookEvaluator {
       if(source!=null) {
         switch(source.getCellTypeEnum()) {
         case NUMERIC: v = source.getNumericCellValue(); break;
+        case FORMULA: v = getCellValue(source); break;
         case STRING: v = source.getStringCellValue(); break;
         default:
           throw new IllegalArgumentException("Unable to copy value from: "+source + " // " + source.getCellTypeEnum() +" // " + v );
         }
       }
     }
-    
+
     switch(cell.getCellTypeEnum()) {
     case FORMULA: 
       cell.setCellType(CellType.NUMERIC);
